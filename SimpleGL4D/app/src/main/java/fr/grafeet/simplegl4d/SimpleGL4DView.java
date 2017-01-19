@@ -46,6 +46,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ThreadFactory;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -87,13 +90,17 @@ class SimpleGL4DView extends GLSurfaceView {
     public static native void ndraw();
     public static native void nreshape(int w, int h);
     public static native void nPreDraw(int indice, float R, float G, float B);
+    public static native void nAnim(boolean animate);
 
     private int carteTileSize, posClickX, posClickY, carteTop, carteLeft, score;
     private int posCouleurGauche, posCouleurDroite, posCouleurHaut, posCouleurBas;
     private static int carteWidth = 10, carteHeight = 14;
+    private boolean animation;
 
     public ArrayList tabCol = new ArrayList();
     int[][] carte = new int[14][10];
+    private Timer timer;
+    private TimerTask timerTask;
 
     private static String TAG = "Camera2GLView";
     private static String _vshader = null;
@@ -136,7 +143,6 @@ class SimpleGL4DView extends GLSurfaceView {
 
         /* Set the renderer responsible for frame rendering */
         setRenderer(_renderer);
-        loadRandCol(8);
     }
     static String readRawTextFile(Context ctx, int resId) {
         InputStream inputStream = ctx.getResources().openRawResource(resId);
@@ -391,6 +397,7 @@ class SimpleGL4DView extends GLSurfaceView {
                 _hasInit = true;
                 _idInitOrDraw = _idDraw;
                 _idInitOrDraw.draw();
+                loadRandCol(8);
             }
         };
         private Idraw _idDraw = new Idraw() {
@@ -464,6 +471,8 @@ class SimpleGL4DView extends GLSurfaceView {
     //Chargement de la carte
     private void loadCarte() {
         Random rand = new Random();
+        animation = true;
+        nAnim(animation);
         for (int i = 0; i < carteHeight; i++) {
             for (int j = 0; j < carteWidth; j++) {
                 int myCol = 0 + rand.nextInt(tabCol.size() - 0);
@@ -475,9 +484,12 @@ class SimpleGL4DView extends GLSurfaceView {
                 carte[i][j] = myCol;
                 tabCol.set(myCol, ((int) tabCol.get(myCol)) - 1);
                 loadGlColor(myCol, i, j);
+                
                 //Log.i("-> FCT <-", "tabCol[" + i + "][" + j + "] :" + " rand: " + myCol + " Reste de tabCol[" + myCol + "]: " + tabCol.get(myCol));
             }
         }
+        animation = false;
+        nAnim(animation);
     }
 
     private void loadGlColor(int couleur, int height, int width){

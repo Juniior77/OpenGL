@@ -3,6 +3,7 @@
 
 GLuint _pId, _posHandle, _colorHandle;
 GLfloat color[1680];
+GLboolean GLanim;
 
 void init(const char * vs, const char * fs) {
     glClearColor(0, 0, 0, 1);
@@ -11,6 +12,10 @@ void init(const char * vs, const char * fs) {
     if(!(_pId = gl4droidCreateProgram(vs, fs))) return;
     _posHandle = glGetAttribLocation(_pId, "vPosition");
     _colorHandle = glGetAttribLocation(_pId, "vColor");
+    for(int i = 0; i < 1680; i++)
+    {
+        color[i]=0.0f;
+    }
     return;
 }
 
@@ -41,7 +46,7 @@ void majColor(int indice, GLfloat R, GLfloat G, GLfloat B){
 }
 
 void draw(void){
-    static GLfloat a0 = 0f;
+    static GLfloat a0 = 0.0f;
 
     GLfloat position[14][80];
     int i, j;
@@ -76,12 +81,16 @@ void draw(void){
     gl4duLoadIdentityf();
     gl4duTranslatef(0, 0.2, -3);
     gl4duRotatef(270.0f, 0, 0, 1);
+    //gl4duRotatef(a0, 0, 1, 0);
+    gl4duRotatef(2 * a0, 1, 0, 0);
+
     /* envoi de toutes les matrices stockees par GL4D */
     gl4duSendMatrices();
     for(int i = 0; i < 560; i+=4)
     {
         glDrawArrays(GL_TRIANGLE_STRIP, i, 4);
     }
+    a0 += 1.4f;
 }
 
 JNIEXPORT void JNICALL Java_fr_grafeet_simplegl4d_SimpleGL4DView_ninit(JNIEnv *env, jobject obj, jstring vs_, jstring fs_) {
@@ -102,4 +111,7 @@ JNIEXPORT void JNICALL Java_fr_grafeet_simplegl4d_SimpleGL4DView_ndraw(JNIEnv * 
 
 JNIEXPORT void JNICALL Java_fr_grafeet_simplegl4d_SimpleGL4DView_nPreDraw(JNIEnv * env, jobject obj, jint indice, jfloat R, jfloat G, jfloat B) {
     majColor(indice, R, G, B);
+}
+JNIEXPORT void JNICALL Java_fr_grafeet_simplegl4d_SimpleGL4DView_nAnim(JNIEnv * env, jobject obj, jboolean anim) {
+    GLanim = (GLboolean)anim;
 }
