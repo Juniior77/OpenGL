@@ -44,6 +44,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Random;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -86,9 +88,12 @@ class SimpleGL4DView extends GLSurfaceView {
     public static native void nreshape(int w, int h);
     public static native void nPreDraw(int indice, float R, float G, float B);
 
-    private int carteTileSize, posClickX, posClickY, carteTop, carteLeft;
-    private int posColLeft, posColRight, posColUp, posColDown;
+    private int carteTileSize, posClickX, posClickY, carteTop, carteLeft, score;
+    private int posCouleurGauche, posCouleurDroite, posCouleurHaut, posCouleurBas;
     private static int carteWidth = 10, carteHeight = 14;
+
+    public ArrayList tabCol = new ArrayList();
+    int[][] carte = new int[14][10];
 
     private static String TAG = "Camera2GLView";
     private static String _vshader = null;
@@ -131,6 +136,7 @@ class SimpleGL4DView extends GLSurfaceView {
 
         /* Set the renderer responsible for frame rendering */
         setRenderer(_renderer);
+        loadRandCol(8);
     }
     static String readRawTextFile(Context ctx, int resId) {
         InputStream inputStream = ctx.getResources().openRawResource(resId);
@@ -416,15 +422,292 @@ class SimpleGL4DView extends GLSurfaceView {
         posClickY = (int)(event.getY() - carteTop) / carteTileSize;
         int monIndice = (posClickY * 10) + posClickX;
 
-        Log.i("->FCT<-", "X: " + posClickX + " Y: " + posClickY);
-        majColorGL(monIndice);
+        //Log.i("->FCT<-", "X: " + posClickX + " Y: " + posClickY);
+        CheckCarteMatch(posClickX, posClickY);
         return true;
     }
 
     public void majColorGL(int indice)
     {
+        //Log.i("->FCT<-", "Indice: " + indice);
+        nPreDraw(indice*12, 0.1f, 0.1f, 0.1f);
+    }
+    //*********************************************************
+    //                      Gestion du jeux
+    //*********************************************************
 
-        Log.i("->FCT<-", "Indice: " + indice);
-        nPreDraw(indice*12, 1, 1, 1);
+    private void loadRandCol(int leNbCouleur) {
+        int nbCouleur = leNbCouleur, nbColMax = 120;
+        int nbMax = (nbColMax / nbCouleur);
+        int ecart = (nbMax / 3);
+        int nbColRandMax = nbMax + ecart;
+        int nbColMin = nbMax - ecart;
+
+        Random rand = new Random();
+
+        tabCol.add(0, 20);
+        //Log.i("-> FCT <-", "tabCol0: NbCol: " + tabCol.get(0));
+        for (int i = 1; i < nbCouleur; i++) {
+            int colRand = nbColMin + rand.nextInt(nbColRandMax - nbColMin);
+            if ((colRand % 2) != 0) {
+                colRand += 1;
+            }
+            tabCol.add(i, colRand);
+            nbColMax -= colRand;
+            //Log.i("-> FCT <-", "tabCol[i]: " + i + " nbColMax: " + tabCol.get(i));
+        }
+        tabCol.add(nbCouleur, nbColMax);
+        //Log.i("-> FCT <-", "tabCol8: nbColMax: " + tabCol.get(8));
+        loadCarte();
+    }
+
+    //Chargement de la carte
+    private void loadCarte() {
+        Random rand = new Random();
+        for (int i = 0; i < carteHeight; i++) {
+            for (int j = 0; j < carteWidth; j++) {
+                int myCol = 0 + rand.nextInt(tabCol.size() - 0);
+                if ((int) tabCol.get(myCol) == 0) {
+                    while ((int) tabCol.get(myCol) == 0) {
+                        myCol = 0 + rand.nextInt(tabCol.size() - 0);
+                    }
+                }
+                carte[i][j] = myCol;
+                tabCol.set(myCol, ((int) tabCol.get(myCol)) - 1);
+                loadGlColor(myCol, i, j);
+                //Log.i("-> FCT <-", "tabCol[" + i + "][" + j + "] :" + " rand: " + myCol + " Reste de tabCol[" + myCol + "]: " + tabCol.get(myCol));
+            }
+        }
+    }
+
+    private void loadGlColor(int couleur, int height, int width){
+        int i = (height * 10) + width;
+switch (couleur){
+        case 0:
+        nPreDraw(i*12, 0.1f, 0.1f, 0.1f);
+        break;
+        case 1:
+        nPreDraw(i*12, 1, 0, 0);
+        break;
+        case 2:
+        nPreDraw(i*12, 0, 1, 0);
+        break;
+        case 3:
+        nPreDraw(i*12, 0, 0, 1);
+        break;
+        case 4:
+        nPreDraw(i*12, 1, 1, 0);
+        break;
+        case 5:
+        nPreDraw(i*12, 0, 1, 1);
+        break;
+        case 6:
+        nPreDraw(i*12, 1, 0, 1);
+        break;
+        case 7:
+        nPreDraw(i*12, 0.5f, 1, 0);
+        break;
+        case 8:
+        nPreDraw(i*12, 0, 0.5f, 1);
+        break;
+        }
+    }
+
+
+    //Gestion du match des couleurs
+    private void CheckCarteMatch(int x, int y)
+    {
+        if(carte[y][x] == 0) {
+            int couleurGauche = getGauche(x, y);
+            int couleurDroite = getDroite(x, y);
+            int couleurHaut = getHaut(x, y);
+            int couleurBas = getBas(x, y);
+            int scoreTmp = score; //Permet de verifier si le score a deja été MAJ
+
+            //Log.i("-> FCT <-", "Couleur de droite  : " + couleurDroite);
+            //Log.i("-> FCT <-", "Couleur de gauche  : " + couleurGauche);
+            //Log.i("-> FCT <-", "Couleur du haut    : " + couleurHaut);
+            //Log.i("-> FCT <-", "Couleur du bas     : " + couleurBas);
+
+            //Gestion des Quadruples
+            if(couleurGauche == couleurDroite && couleurHaut == couleurBas && couleurGauche != 0 && couleurHaut != 0) {
+                carte[y][posCouleurGauche] = 0;
+                majColorGL((y*10)+posCouleurGauche);
+                carte[y][posCouleurDroite] = 0;
+                majColorGL((y*10)+posCouleurDroite);
+                carte[posCouleurHaut][x] = 0;
+                majColorGL((posCouleurHaut*10)+x);
+                carte[posCouleurBas][x] = 0;
+                majColorGL((posCouleurBas*10)+x);
+                score += 120;
+            }
+            else if(score == scoreTmp){
+                //Gestion des Triples
+                if (couleurDroite == couleurHaut && couleurDroite == couleurBas && couleurDroite != 0) {
+                    //clickSound();
+                    carte[y][posCouleurDroite] = 0;
+                    majColorGL((y*10)+posCouleurDroite);
+                    carte[posCouleurHaut][x] = 0;
+                    majColorGL((posCouleurHaut*10)+x);
+                    carte[posCouleurBas][x] = 0;
+                    majColorGL((posCouleurBas*10)+x);
+                    score += 60;
+                }
+                if (couleurHaut == couleurDroite && couleurHaut == couleurGauche && couleurHaut != 0) {
+                    //clickSound();
+                    carte[posCouleurHaut][x] = 0;
+                    majColorGL((posCouleurHaut*10)+x);
+                    carte[y][posCouleurDroite] = 0;
+                    majColorGL((y*10)+posCouleurDroite);
+                    carte[y][posCouleurGauche] = 0;
+                    majColorGL((y*10)+posCouleurGauche);
+                    score += 60;
+                }
+                if (couleurGauche == couleurHaut && couleurGauche == couleurBas && couleurGauche != 0) {
+                    //clickSound();
+                    carte[y][posCouleurGauche] = 0;
+                    majColorGL((y*10)+posCouleurGauche);
+                    carte[posCouleurHaut][x] = 0;
+                    majColorGL((posCouleurHaut*10)+x);
+                    carte[posCouleurBas][x] = 0;
+                    majColorGL((posCouleurBas*10)+x);
+                    score += 60;
+                }
+                if (couleurBas == couleurDroite && couleurBas == couleurGauche && couleurBas != 0) {
+                    //clickSound();
+                    carte[posCouleurBas][x] = 0;
+                    majColorGL((posCouleurBas*10)+x);
+                    carte[y][posCouleurDroite] = 0;
+                    majColorGL((y*10)+posCouleurDroite);
+                    carte[y][posCouleurGauche] = 0;
+                    majColorGL((y*10)+posCouleurGauche);
+                    score += 60;
+                }
+                else if (score == scoreTmp){
+
+                    //Gestion des Double
+                    if (couleurDroite == couleurHaut && couleurDroite != 0) {
+                        //clickSound();
+                        carte[y][posCouleurDroite] = 0;
+                        majColorGL((y*10)+posCouleurDroite);
+                        carte[posCouleurHaut][x] = 0;
+                        majColorGL((posCouleurHaut*10)+x);
+
+                        score += 40;
+                    }
+                    if (couleurHaut == couleurGauche && couleurHaut != 0) {
+                        //clickSound();
+                        carte[posCouleurHaut][x] = 0;
+                        majColorGL((posCouleurHaut*10)+x);
+                        carte[y][posCouleurGauche] = 0;
+                        majColorGL((y*10)+posCouleurGauche);
+                        score += 40;
+                    }
+                    if (couleurGauche == couleurBas && couleurGauche != 0) {
+                        //clickSound();
+                        carte[y][posCouleurGauche] = 0;
+                        majColorGL((y*10)+posCouleurGauche);
+                        carte[posCouleurBas][x] = 0;
+                        majColorGL((posCouleurBas*10)+x);
+                        score += 40;
+                    }
+                    if (couleurBas == couleurDroite && couleurBas != 0) {
+                        //clickSound();
+                        carte[posCouleurBas][x] = 0;
+                        majColorGL((posCouleurBas*10)+x);
+                        carte[y][posCouleurDroite] = 0;
+                        majColorGL((y*10)+posCouleurDroite);
+                        score += 40;
+                    }
+                    if (couleurBas == couleurHaut && couleurBas != 0) {
+                        //clickSound();
+                        carte[posCouleurBas][x] = 0;
+                        majColorGL((posCouleurBas*10)+x);
+                        carte[posCouleurHaut][x] = 0;
+                        majColorGL((posCouleurHaut*10)+x);
+                        score += 40;
+                    }
+                    if (couleurDroite == couleurGauche && couleurDroite != 0) {
+                        //clickSound();
+                        carte[y][posCouleurDroite] = 0;
+                        majColorGL((y*10)+posCouleurDroite);
+                        carte[y][posCouleurGauche] = 0;
+                        majColorGL((y*10)+posCouleurGauche);
+                        score += 40;
+                    }
+                    else if(score == scoreTmp)
+                    {
+                        //Enlève du temps;
+                    }
+                }
+            }
+        }
+    }
+
+
+    //Stock la couleur de gauche
+    private int getGauche (int x, int y)
+    {
+        int colorNegFirst = 0;
+        for(int i = x; i >= 0; i-- )
+        {
+            if(carte[y][i]!=0)
+            {
+                colorNegFirst = carte[y][i];
+                posCouleurGauche = i;
+                break;
+            }
+        }
+        return colorNegFirst;
+    }
+
+    //Stock la couleur de droite
+    private int getDroite(int x, int y)
+    {
+        int colorPosFirst = 0;
+        for(int i = x; i <= 9; i++ )
+        {
+            if(carte[y][i]!=0)
+            {
+                colorPosFirst = carte[y][i];
+                posCouleurDroite = i;
+                break;
+            }
+            //Log.i("-> FCT <-", "Incrémentation de i: " + i);
+        }
+        return colorPosFirst;
+    }
+
+    //Stock la couleur du haut
+    private int getHaut(int x, int y)
+    {
+        int colorNegFirst = 0;
+        for(int i = y; i >= 0; i-- )
+        {
+            if(carte[i][x]!=0)
+            {
+                colorNegFirst = carte[i][x];
+                posCouleurHaut = i;
+                break;
+            }
+        }
+        return colorNegFirst;
+    }
+
+    //Stock la couleur du bas
+    private int getBas(int x, int y)
+    {
+        int colorPosFirst = 0;
+        for(int i = y; i <= 13; i++ )
+        {
+            if(carte[i][x]!=0)
+            {
+                colorPosFirst = carte[i][x];
+                posCouleurBas = i;
+                break;
+            }
+            //Log.i("-> FCT <-", "Incrémentation de i: " + i);
+        }
+        return colorPosFirst;
     }
 }
