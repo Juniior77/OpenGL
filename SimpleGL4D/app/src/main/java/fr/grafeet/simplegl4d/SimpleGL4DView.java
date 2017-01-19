@@ -84,6 +84,11 @@ class SimpleGL4DView extends GLSurfaceView {
     public static native void ninit(String vs, String fs);
     public static native void ndraw();
     public static native void nreshape(int w, int h);
+    public static native void nPreDraw(int indice, float R, float G, float B);
+
+    private int carteTileSize, posClickX, posClickY, carteTop, carteLeft;
+    private int posColLeft, posColRight, posColUp, posColDown;
+    private static int carteWidth = 10, carteHeight = 14;
 
     private static String TAG = "Camera2GLView";
     private static String _vshader = null;
@@ -402,9 +407,24 @@ class SimpleGL4DView extends GLSurfaceView {
     }
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        float X, Y, Z;
 
-        //Log.i("->FCT<-", "X: " + X + " Y: " + Y);
+        carteTileSize = getWidth() / carteWidth;
+        carteTop = ((getHeight() - carteHeight * carteTileSize) / 2)+carteTileSize;
+        carteLeft = ((getWidth() - carteWidth * carteTileSize) / 2);
+
+        posClickX = (int)(event.getX() - carteLeft) / carteTileSize;
+        posClickY = (int)(event.getY() - carteTop) / carteTileSize;
+        int monIndice = (posClickY * 10) + posClickX;
+
+        Log.i("->FCT<-", "X: " + posClickX + " Y: " + posClickY);
+        majColorGL(monIndice);
         return true;
+    }
+
+    public void majColorGL(int indice)
+    {
+
+        Log.i("->FCT<-", "Indice: " + indice);
+        nPreDraw(indice*12, 1, 1, 1);
     }
 }

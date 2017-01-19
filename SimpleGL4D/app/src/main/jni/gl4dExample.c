@@ -2,6 +2,7 @@
 #include "GL4D/gl4droid.h"
 
 GLuint _pId, _posHandle, _colorHandle;
+GLfloat color[1680];
 
 void init(const char * vs, const char * fs) {
     glClearColor(0, 0, 0, 1);
@@ -189,6 +190,24 @@ void drawold(void) {
     }
 }
 
+void majColor(int indice, GLfloat R, GLfloat G, GLfloat B){
+    color[indice] = (GLfloat) R;
+    color[indice+1] = (GLfloat) G;
+    color[indice+2] = (GLfloat) B;
+
+    color[indice+3] = (GLfloat) R;
+    color[indice+4] = (GLfloat) G;
+    color[indice+5] = (GLfloat) B;
+
+    color[indice+6] = (GLfloat) R;
+    color[indice+7] = (GLfloat) G;
+    color[indice+8] = (GLfloat) B;
+
+    color[indice+9] = (GLfloat) R;
+    color[indice+10] = (GLfloat) G;
+    color[indice+11] = (GLfloat) B;
+}
+
 void draw(void){
     static GLfloat a0 = 90.0f;
 
@@ -213,10 +232,10 @@ void draw(void){
             position[i][(j * 8) + 7] = y + ratio_y;
         }
     }
-    GLfloat color[140*12] = {
+    /*GLfloat color[1680] = {
             // 4 RGB colors
             1, 1, 1,    1, 0, 1,    1, 0, 1,    1, 0, 1,
-            1, 0, 0,    1, 0, 0,    1, 0, 0,    1, 0, 0,
+            1, 0, 0,    1, 0, 0,    1, 0, 0,    1, 1, 0,
             1, 1, 0,    1, 1, 0,    1, 1, 0,    1, 1, 0,
             0, 1, 0,    0, 1, 0,    0, 1, 0,    0, 1, 0,
             0, 0, 1,    0, 0, 1,    0, 0, 1,    0, 0, 1,
@@ -354,8 +373,8 @@ void draw(void){
             0, 0, 1,    0, 0, 1,    0, 0, 1,    0, 0, 1,
             0, 1, 1,    0, 1, 1,    0, 1, 1,    0, 1, 1,
             0, 0, 0,    0, 0, 0,    0, 0, 0,    0, 0, 0,
-            1, 0, 1,    1, 0, 1,    1, 0, 1,    1, 1, 1,
-    };
+            1, 0, 1,    1, 0, 1,    1, 0, 1,    1, 0, 1,
+    };*/
 
    /* GLubyte indices[560];
 
@@ -421,3 +440,6 @@ JNIEXPORT void JNICALL Java_fr_grafeet_simplegl4d_SimpleGL4DView_ndraw(JNIEnv * 
     draw();
 }
 
+JNIEXPORT void JNICALL Java_fr_grafeet_simplegl4d_SimpleGL4DView_nPreDraw(JNIEnv * env, jobject obj, jint indice, jfloat R, jfloat G, jfloat B) {
+    majColor(indice, R, G, B);
+}
