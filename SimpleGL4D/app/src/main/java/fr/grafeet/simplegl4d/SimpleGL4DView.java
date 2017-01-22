@@ -90,12 +90,11 @@ class SimpleGL4DView extends GLSurfaceView {
     public static native void ndraw();
     public static native void nreshape(int w, int h);
     public static native void nPreDraw(int indice, float R, float G, float B);
-    public static native void nAnim(boolean animate);
+    public static native void nAnimError(boolean animate);
 
     private int carteTileSize, posClickX, posClickY, carteTop, carteLeft, score;
     private int posCouleurGauche, posCouleurDroite, posCouleurHaut, posCouleurBas;
     private static int carteWidth = 10, carteHeight = 14;
-    private boolean animation;
 
     public ArrayList tabCol = new ArrayList();
     int[][] carte = new int[14][10];
@@ -471,8 +470,6 @@ class SimpleGL4DView extends GLSurfaceView {
     //Chargement de la carte
     private void loadCarte() {
         Random rand = new Random();
-        animation = true;
-        nAnim(animation);
         for (int i = 0; i < carteHeight; i++) {
             for (int j = 0; j < carteWidth; j++) {
                 int myCol = 0 + rand.nextInt(tabCol.size() - 0);
@@ -488,8 +485,6 @@ class SimpleGL4DView extends GLSurfaceView {
                 //Log.i("-> FCT <-", "tabCol[" + i + "][" + j + "] :" + " rand: " + myCol + " Reste de tabCol[" + myCol + "]: " + tabCol.get(myCol));
             }
         }
-        animation = false;
-        nAnim(animation);
     }
 
     private void loadGlColor(int couleur, int height, int width){
@@ -545,12 +540,17 @@ switch (couleur){
             if(couleurGauche == couleurDroite && couleurHaut == couleurBas && couleurGauche != 0 && couleurHaut != 0) {
                 carte[y][posCouleurGauche] = 0;
                 majColorGL((y*10)+posCouleurGauche);
+
                 carte[y][posCouleurDroite] = 0;
                 majColorGL((y*10)+posCouleurDroite);
+
                 carte[posCouleurHaut][x] = 0;
                 majColorGL((posCouleurHaut*10)+x);
+
+
                 carte[posCouleurBas][x] = 0;
                 majColorGL((posCouleurBas*10)+x);
+
                 score += 120;
             }
             else if(score == scoreTmp){
@@ -649,7 +649,7 @@ switch (couleur){
                     }
                     else if(score == scoreTmp)
                     {
-                        //Enlève du temps;
+                        nAnimError(true);
                     }
                 }
             }
