@@ -37,6 +37,7 @@ import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLES32;
 import android.opengl.GLSurfaceView;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.MotionEvent;
 
@@ -95,6 +96,7 @@ class SimpleGL4DView extends GLSurfaceView {
     private int carteTileSize, posClickX, posClickY, carteTop, carteLeft, score;
     private int posCouleurGauche, posCouleurDroite, posCouleurHaut, posCouleurBas;
     private static int carteWidth = 10, carteHeight = 14;
+    private boolean in, newmap = false;
 
     public ArrayList tabCol = new ArrayList();
     int[][] carte = new int[14][10];
@@ -396,7 +398,7 @@ class SimpleGL4DView extends GLSurfaceView {
                 _hasInit = true;
                 _idInitOrDraw = _idDraw;
                 _idInitOrDraw.draw();
-                loadRandCol(8);
+                loadRandCol(6);
             }
         };
         private Idraw _idDraw = new Idraw() {
@@ -429,7 +431,9 @@ class SimpleGL4DView extends GLSurfaceView {
         int monIndice = (posClickY * 10) + posClickX;
 
         //Log.i("->FCT<-", "X: " + posClickX + " Y: " + posClickY);
-        CheckCarteMatch(posClickX, posClickY);
+        if(event.getAction() == MotionEvent.ACTION_UP){
+            CheckCarteMatch(posClickX, posClickY);
+        }
         return true;
     }
 
