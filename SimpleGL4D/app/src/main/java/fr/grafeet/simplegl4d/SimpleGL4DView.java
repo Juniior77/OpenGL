@@ -34,6 +34,8 @@ package fr.grafeet.simplegl4d;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.opengl.GLES32;
 import android.opengl.GLSurfaceView;
@@ -92,6 +94,8 @@ class SimpleGL4DView extends GLSurfaceView {
     public static native void nreshape(int w, int h);
     public static native void nPreDraw(int indice, float R, float G, float B);
     public static native void nAnimError(boolean animate);
+    public static native void ndrawWin(boolean winner);
+    public static native void loadTexture(int tex_number, int[] pixels, int pw, int ph);
 
     private int carteTileSize, posClickX, posClickY, carteTop, carteLeft, score;
     private int posCouleurGauche, posCouleurDroite, posCouleurHaut, posCouleurBas;
@@ -395,6 +399,16 @@ class SimpleGL4DView extends GLSurfaceView {
             @Override
             public void draw() {
                 ninit(_vshader, _fshader);
+
+                Bitmap _bm = null;
+                int[] _pixels = null;
+                _bm = BitmapFactory.decodeResource(getResources(), R.drawable.gagner);
+                if(_bm != null){
+                    _pixels = new int[_bm.getWidth() * _bm.getHeight()];
+                    _bm.getPixels(_pixels, 0, _bm.getWidth(), 0, 0, _bm.getWidth(), _bm.getHeight());
+                    loadTexture(0, _pixels, _bm.getWidth(), _bm.getHeight());
+                }
+
                 _hasInit = true;
                 _idInitOrDraw = _idDraw;
                 _idInitOrDraw.draw();
@@ -419,6 +433,7 @@ class SimpleGL4DView extends GLSurfaceView {
         }
         public void onSurfaceCreated(GL10 gl, EGLConfig config) { }
     }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
@@ -433,6 +448,7 @@ class SimpleGL4DView extends GLSurfaceView {
         //Log.i("->FCT<-", "X: " + posClickX + " Y: " + posClickY);
         if(event.getAction() == MotionEvent.ACTION_UP){
             CheckCarteMatch(posClickX, posClickY);
+            //ndrawWin(true);
         }
         return true;
     }
